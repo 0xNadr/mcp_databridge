@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Agent as AI Agent
+    participant FastMCP as FastMCP (server.py)
+    participant Tool as query_passengers (query.py)
+    participant DB as database.py
+    participant SQLite as SQLite DB
+
+    Agent->>FastMCP: JSON-RPC tools/call<br/>{"name": "query_passengers",<br/>"arguments": {"filters": {"sex": "female"}}}
+
+    FastMCP->>Tool: query_passengers(filters={"sex": "female"})
+    Tool->>Tool: Start timer (time.monotonic)
+
+    Tool->>DB: query_resolved(filters={"sex": "female"})
+
+    DB->>DB: Resolve filters via FILTER_CONDITIONS<br/>"sex" → "s.sex = ?" param: "female"
+
+    DB->>DB: Build SQL:<br/>RESOLVED_VIEW_SQL<br/>+ WHERE s.sex = ?<br/>+ LIMIT 50
+
+    DB->>SQLite: Execute parameterized query<br/>Params: ["female", 50, 0]
+
+    SQLite-->>DB: Rows with resolved labels
+
+    DB-->>Tool: List of dicts<br/>[{"sex": "female", "class": "First", ...}]
+
+    Tool->>Tool: Log: tool.query_passengers,<br/>row_count=314, duration_ms=0.82
+
+    Tool-->>FastMCP: JSON string:<br/>{"rows": [...], "count": 314}
+
+    FastMCP-->>Agent: JSON-RPC response<br/>{"result": {"content": [{"type": "text", "text": "..."}]}}

@@ -1,0 +1,31 @@
+flowchart TD
+    INPUT[/"Agent sends SQL query"/] --> CHECK1
+
+    CHECK1{First word\n= SELECT?}
+    CHECK1 -->|No| BLOCK1[BLOCKED\n'Only SELECT allowed']
+    CHECK1 -->|Yes| CHECK2
+
+    CHECK2{Contains blocked\nkeyword?\nDROP INSERT UPDATE\nDELETE ALTER CREATE\nATTACH DETACH PRAGMA}
+    CHECK2 -->|Yes| BLOCK2[BLOCKED\n'Keyword not allowed']
+    CHECK2 -->|No| CHECK3
+
+    CHECK3{Multiple\nstatements?\nsemicolon in middle}
+    CHECK3 -->|Yes| BLOCK3[BLOCKED\n'Only single statements']
+    CHECK3 -->|No| CHECK4
+
+    CHECK4{Has LIMIT\nclause?}
+    CHECK4 -->|No| ADD["Auto-append\nLIMIT 200"]
+    CHECK4 -->|Yes| EXEC
+    ADD --> EXEC
+
+    EXEC[Execute on SQLite] --> CHECK5
+
+    CHECK5{SQLite\nerror?}
+    CHECK5 -->|Yes| WRAP["Return JSON error\nNo stack traces"]
+    CHECK5 -->|No| RESULT[/"Return JSON rows"/]
+
+    style BLOCK1 fill:#5a2d2d,color:#fff
+    style BLOCK2 fill:#5a2d2d,color:#fff
+    style BLOCK3 fill:#5a2d2d,color:#fff
+    style WRAP fill:#5a4a2d,color:#fff
+    style RESULT fill:#2d5a2d,color:#fff

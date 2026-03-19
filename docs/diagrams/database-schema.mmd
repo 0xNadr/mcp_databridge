@@ -1,0 +1,62 @@
+erDiagram
+    Observation ||--o{ Sex : "sex_id"
+    Observation ||--o{ PassengerClass : "class_id"
+    Observation ||--o{ Deck : "deck_id"
+    Observation ||--o{ Embarked : "embarked_id"
+    Observation ||--o{ EmbarkTown : "embark_town_id"
+    Observation ||--o{ Who : "who_id"
+    Observation ||--o{ Alive : "alive_id"
+
+    Observation {
+        int rowid PK
+        int survived
+        int pclass
+        float age
+        int sibsp
+        int parch
+        float fare
+        int adult_male
+        int alone
+        int sex_id FK
+        int class_id FK
+        int deck_id FK
+        int embarked_id FK
+        int embark_town_id FK
+        int who_id FK
+        int alive_id FK
+    }
+
+    Sex {
+        int sex_id PK
+        text sex "0=female 1=male"
+    }
+
+    PassengerClass {
+        int class_id PK
+        text class "0=First 1=Second 2=Third"
+    }
+
+    Deck {
+        int deck_id PK
+        text deck "0=A ... 6=G  -1=NULL"
+    }
+
+    Embarked {
+        int embarked_id PK
+        text embarked "0=C 1=Q 2=S  -1=NULL"
+    }
+
+    EmbarkTown {
+        int embark_town_id PK
+        text embark_town "Cherbourg Queenstown Southampton"
+    }
+
+    Who {
+        int who_id PK
+        text who "0=child 1=man 2=woman"
+    }
+
+    Alive {
+        int alive_id PK
+        text alive "0=no 1=yes"
+    }

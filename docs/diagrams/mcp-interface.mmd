@@ -1,0 +1,33 @@
+flowchart TB
+    subgraph "MCP Interface"
+        direction TB
+        subgraph Tools["Tools (7) — Actions"]
+            query_passengers["query_passengers\nFilter & retrieve"]
+            get_passenger["get_passenger\nSingle row lookup"]
+            list_tables["list_tables\nSchema discovery"]
+            aggregate_stats["aggregate_stats\nGroup-by math"]
+            survival["get_survival_analysis\nSurvival rates"]
+            describe["describe_column\nColumn statistics"]
+            run_sql["run_sql\nSandboxed SQL escape hatch"]
+        end
+
+        subgraph Resources["Resources (3) — Context"]
+            info["databridge://info\nSchema + row counts"]
+            sample["databridge://sample\nFirst 5 rows"]
+            stats["databridge://stats/{column}\nColumn stats on demand"]
+        end
+
+        subgraph Prompts["Prompts (3) — Workflows"]
+            explore["explore_dataset\nGuided onboarding"]
+            surv["survival_analysis\n7-dimension analysis"]
+            quality["data_quality_report\nMissing values + outliers"]
+        end
+    end
+
+    Agent((AI Agent)) --> Tools
+    Agent -.->|reads for context| Resources
+    Agent -.->|loads for guidance| Prompts
+
+    style Tools fill:#1a3a5c,color:#fff
+    style Resources fill:#3a1a5c,color:#fff
+    style Prompts fill:#5c3a1a,color:#fff

@@ -1,0 +1,59 @@
+graph TB
+    subgraph Clients
+        CD[Claude Desktop]
+        VS[VS Code]
+        ANY[Any MCP Client]
+    end
+
+    subgraph Transport
+        STDIO[stdio - stdin/stdout pipes]
+        HTTP[streamable-http - port 8000]
+    end
+
+    subgraph "MCP DataBridge Server"
+        subgraph "server.py — Wiring Layer"
+            MCP[FastMCP Registration]
+        end
+
+        subgraph "Business Logic Layer"
+            T1[query.py]
+            T2[analytics.py]
+            T3[sql.py]
+            R[resources.py]
+            P[prompts.py]
+        end
+
+        subgraph "Data Access Layer"
+            DB[database.py]
+            VIEW[RESOLVED_VIEW_SQL\n7-table LEFT JOIN]
+            FC[FILTER_CONDITIONS\nWhitelist]
+        end
+
+        subgraph "Infrastructure"
+            CFG[config.py\npydantic-settings]
+            LOG[logging.py\nstructlog → stderr]
+            MOD[models.py\nPydantic models]
+        end
+    end
+
+    subgraph "SQLite Database"
+        OBS[Observation\n891 rows]
+        LK1[Sex]
+        LK2[Class]
+        LK3[Deck]
+        LK4[Embarked]
+        LK5[EmbarkTown]
+        LK6[Who]
+        LK7[Alive]
+    end
+
+    CD & VS --> STDIO
+    ANY --> HTTP
+    STDIO & HTTP --> MCP
+    MCP --> T1 & T2 & T3 & R & P
+    T1 & T2 & T3 & R --> DB
+    DB --> VIEW
+    VIEW --> OBS
+    OBS --- LK1 & LK2 & LK3 & LK4 & LK5 & LK6 & LK7
+    CFG -.-> DB
+    LOG -.-> T1 & T2 & T3

@@ -1,0 +1,22 @@
+flowchart LR
+    subgraph "What the Agent Sees"
+        INPUT["filters: {sex: 'female', pclass: 1}"]
+        OUTPUT["rows: [{sex: 'female',\nclass: 'First',\ndeck: 'C', ...}]"]
+    end
+
+    subgraph "What the Server Does (hidden from agent)"
+        RESOLVE["FILTER_CONDITIONS\nresolves 'sex' → s.sex = ?"]
+        JOIN["RESOLVED_VIEW_SQL\n7 LEFT JOINs"]
+        PARAM["Parameterized query\n? placeholders"]
+    end
+
+    subgraph "Raw Database"
+        RAW["sex_id=0, class_id=0,\ndeck_id=2, embarked_id=0"]
+    end
+
+    INPUT --> RESOLVE --> PARAM --> RAW
+    RAW --> JOIN --> OUTPUT
+
+    style INPUT fill:#2d5a2d,color:#fff
+    style OUTPUT fill:#2d5a2d,color:#fff
+    style RAW fill:#5a2d2d,color:#fff
