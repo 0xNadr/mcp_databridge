@@ -150,11 +150,17 @@ mcp dev src/mcp_databridge/server.py
 
 ```
 src/mcp_databridge/
-├── server.py       # FastMCP server — tools, resources, prompts
+├── server.py       # FastMCP server wiring — registers tools, resources, prompts
 ├── database.py     # SQLite queries, resolved-view JOINs, SQL sandbox
 ├── models.py       # Pydantic models for validation
 ├── config.py       # Environment variable configuration
 ├── logging.py      # Structured JSON logging (structlog)
+├── resources.py    # MCP resources (info, sample, stats)
+├── prompts.py      # MCP prompts (explore, survival, quality)
+├── tools/
+│   ├── query.py    # query_passengers, get_passenger, list_tables
+│   ├── analytics.py # aggregate_stats, get_survival_analysis, describe_column
+│   └── sql.py      # run_sql (sandboxed, SELECT-only)
 └── __main__.py     # Entry point
 ```
 
@@ -168,4 +174,4 @@ src/mcp_databridge/
 
 ## Tech Stack
 
-Python 3.11+ | FastMCP | SQLite | SQLAlchemy | Pydantic | structlog | pytest | Ruff | Docker | GitHub Actions
+Python 3.11+ | FastMCP | SQLite (stdlib sqlite3) | Pydantic | structlog | pytest | Ruff | Docker | GitHub Actions
