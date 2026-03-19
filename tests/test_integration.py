@@ -88,9 +88,7 @@ class TestWorkflows:
     """Test realistic AI agent workflows."""
 
     def test_survival_rate_first_class_women(self) -> None:
-        result = json.loads(
-            query_passengers(filters={"sex": "female", "pclass": 1}, limit=200)
-        )
+        result = json.loads(query_passengers(filters={"sex": "female", "pclass": 1}, limit=200))
         rows = result["rows"]
         survived = sum(1 for r in rows if r["survived"] == 1)
         rate = survived / len(rows)

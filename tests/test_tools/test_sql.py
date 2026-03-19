@@ -19,8 +19,7 @@ class TestReadonlySQL:
 
     def test_select_with_join(self) -> None:
         rows = execute_readonly_sql(
-            "SELECT o.survived, s.sex FROM Observation o "
-            "JOIN Sex s ON o.sex_id = s.sex_id LIMIT 5"
+            "SELECT o.survived, s.sex FROM Observation o JOIN Sex s ON o.sex_id = s.sex_id LIMIT 5"
         )
         assert len(rows) == 5
         assert "sex" in rows[0]

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "Bash(mkdir -p data)",
+      "Bash(curl -L -o data/titanic.db \"https://github.com/davidjamesknight/SQLite_databases_for_learning_data_science/raw/main/titanic.db\")",
+      "Bash(sqlite3 data/titanic.db \".tables\")",
+      "Bash(sqlite3 data/titanic.db \".schema\")",
+      "Bash(sqlite3 data/titanic.db \"SELECT COUNT\\(*\\) FROM Observation;\")",
+      "Bash(sqlite3 -header -column data/titanic.db \"SELECT * FROM Observation LIMIT 5;\")",
+      "Bash(sqlite3 data/titanic.db \"SELECT COUNT\\(*\\) as total, SUM\\(CASE WHEN age IS NULL THEN 1 ELSE 0 END\\) as null_age, SUM\\(CASE WHEN deck_id = -1 THEN 1 ELSE 0 END\\) as missing_deck, SUM\\(CASE WHEN embarked_id = -1 THEN 1 ELSE 0 END\\) as missing_embarked FROM Observation;\")"
+    ]
+  }
+}

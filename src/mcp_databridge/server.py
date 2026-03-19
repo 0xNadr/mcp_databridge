@@ -379,7 +379,7 @@ def survival_analysis() -> str:
         "   - Children had a notably higher survival rate\n\n"
         "5. **Intersectional analysis**: Use `aggregate_stats` with filters\n"
         "   - Compare survival of 1st class women vs 3rd class men\n"
-        "   - Use filters like {\"sex\": \"female\", \"pclass\": 1}\n\n"
+        '   - Use filters like {"sex": "female", "pclass": 1}\n\n'
         "6. **Fare analysis**: Use `aggregate_stats` to compare average fare "
         "of survivors vs non-survivors\n\n"
         "7. **Family size impact**: Analyze sibsp and parch columns\n"

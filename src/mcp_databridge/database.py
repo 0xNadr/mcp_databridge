@@ -197,8 +197,15 @@ def execute_readonly_sql(query: str) -> list[dict[str, Any]]:
     # Block dangerous keywords that could appear in subqueries or CTEs
     upper = stripped.upper()
     blocked = [
-        "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
-        "CREATE", "ATTACH", "DETACH", "PRAGMA",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "DROP",
+        "ALTER",
+        "CREATE",
+        "ATTACH",
+        "DETACH",
+        "PRAGMA",
     ]
     for keyword in blocked:
         if keyword in upper.split():
@@ -276,8 +283,7 @@ def get_column_stats(column: str) -> dict[str, Any]:
 
             total = sum(d["count"] for d in distribution)
             missing = sum(
-                d["count"] for d in distribution
-                if d["value"] is None or d["value"] == ""
+                d["count"] for d in distribution if d["value"] is None or d["value"] == ""
             )
             return {
                 "column": column,
@@ -308,9 +314,22 @@ def aggregate(
         raise ValueError(f"Invalid metric: {metric!r}. Valid: {sorted(valid_metrics)}")
 
     all_cols = {
-        "age", "fare", "sibsp", "parch", "pclass", "survived",
-        "adult_male", "alone", "sex", "embarked", "class", "who",
-        "deck", "embark_town", "alive", "row_number",
+        "age",
+        "fare",
+        "sibsp",
+        "parch",
+        "pclass",
+        "survived",
+        "adult_male",
+        "alone",
+        "sex",
+        "embarked",
+        "class",
+        "who",
+        "deck",
+        "embark_town",
+        "alive",
+        "row_number",
     }
     if group_by not in all_cols:
         raise ValueError(f"Unknown group_by column: {group_by!r}")

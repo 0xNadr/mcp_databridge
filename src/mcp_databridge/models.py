@@ -35,9 +35,7 @@ class QueryPassengersParams(BaseModel):
     """Parameters for the query_passengers tool."""
 
     filters: PassengerFilters | None = Field(None, description="Filters to apply")
-    columns: list[str] | None = Field(
-        None, description="Columns to return (all if not specified)"
-    )
+    columns: list[str] | None = Field(None, description="Columns to return (all if not specified)")
     limit: int = Field(50, ge=1, le=200, description="Maximum number of rows to return")
     offset: int = Field(0, ge=0, description="Number of rows to skip")
 
