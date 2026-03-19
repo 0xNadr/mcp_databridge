@@ -7,16 +7,16 @@ Production-ready MCP server that enables AI agents to interact with the Titanic 
 ```
 ┌──────────────┐         MCP Protocol         ┌──────────────────┐
 │   AI Agent   │◄────── stdio / HTTP ────────►│  MCP DataBridge  │
-│ (Claude, etc)│                               │                  │
-└──────────────┘                               │  7 Tools         │
-                                               │  3 Resources     │
-                                               │  3 Prompts       │
-                                               │                  │
-                                               │  ┌────────────┐  │
-                                               │  │  SQLite DB  │  │
-                                               │  │  (Titanic)  │  │
-                                               │  └────────────┘  │
-                                               └──────────────────┘
+│ (Claude, etc)│                              │                  │
+└──────────────┘                              │  7 Tools         │
+                                              │  3 Resources     │
+                                              │  3 Prompts       │
+                                              │                  │
+                                              │  ┌────────────┐  │
+                                              │  │  SQLite DB │  │
+                                              │  │  (Titanic) │  │
+                                              │  └────────────┘  │
+                                              └──────────────────┘
 ```
 
 **Database**: 891 passengers across 8 normalized tables (Observation + 7 lookup tables). All tools return human-readable labels — no raw foreign key IDs.
