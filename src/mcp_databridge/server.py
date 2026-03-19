@@ -160,10 +160,14 @@ def get_survival_analysis(dimension: str) -> str:
     start = time.monotonic()
     valid_dimensions = {"class", "sex", "embarked", "age_group", "deck", "who", "alone"}
     if dimension not in valid_dimensions:
-        return json.dumps({"error": f"Invalid dimension: {dimension!r}. Valid: {sorted(valid_dimensions)}"})
+        valid = sorted(valid_dimensions)
+        return json.dumps({"error": f"Invalid dimension: {dimension!r}. Valid: {valid}"})
 
     try:
-        from mcp_databridge.database import get_connection, RESOLVED_VIEW_SQL
+        from mcp_databridge.database import (  # noqa: I001
+            RESOLVED_VIEW_SQL,
+            get_connection,
+        )
 
         resolved_cte = f"WITH resolved AS ({RESOLVED_VIEW_SQL})"
 
@@ -274,7 +278,7 @@ def run_sql(query: str) -> str:
 
 @mcp.resource("databridge://info")
 def dataset_info() -> str:
-    """Titanic dataset overview: schema, table relationships, row counts, and missing value summary."""
+    """Titanic dataset overview: schema, relationships, row counts, missing values."""
     schemas = get_table_schemas()
 
     from mcp_databridge.database import get_connection

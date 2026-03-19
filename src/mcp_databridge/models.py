@@ -16,7 +16,9 @@ class PassengerFilters(BaseModel):
     age_min: float | None = Field(None, ge=0, description="Minimum age")
     age_max: float | None = Field(None, ge=0, description="Maximum age")
     embarked: Literal["C", "Q", "S"] | None = Field(None, description="Port of embarkation")
-    who: Literal["child", "man", "woman"] | None = Field(None, description="Category: child, man, or woman")
+    who: Literal["child", "man", "woman"] | None = Field(
+        None, description="Category: child, man, or woman"
+    )
     deck: Literal["A", "B", "C", "D", "E", "F", "G"] | None = Field(None, description="Deck letter")
     alone: bool | None = Field(None, description="Travelling alone")
     adult_male: bool | None = Field(None, description="Is adult male")

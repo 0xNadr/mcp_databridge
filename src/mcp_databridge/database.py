@@ -111,7 +111,8 @@ def query_resolved(
     if filters:
         for key, value in filters.items():
             if key not in FILTER_CONDITIONS:
-                raise ValueError(f"Unknown filter key: {key!r}. Valid keys: {sorted(FILTER_CONDITIONS)}")
+                valid_keys = sorted(FILTER_CONDITIONS)
+                raise ValueError(f"Unknown filter key: {key!r}. Valid: {valid_keys}")
             where_clauses.append(FILTER_CONDITIONS[key])
             # Convert booleans to int for SQLite
             if isinstance(value, bool):
@@ -195,12 +196,15 @@ def execute_readonly_sql(query: str) -> list[dict[str, Any]]:
 
     # Block dangerous keywords that could appear in subqueries or CTEs
     upper = stripped.upper()
-    blocked = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "ATTACH", "DETACH", "PRAGMA"]
+    blocked = [
+        "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
+        "CREATE", "ATTACH", "DETACH", "PRAGMA",
+    ]
     for keyword in blocked:
         if keyword in upper.split():
             raise ValueError(f"Forbidden keyword in query: {keyword}")
 
-    sql = f"{stripped} LIMIT {settings.max_results}"
+    sql = f"{stripped} LIMIT {settings.max_results}" if "LIMIT" not in upper else stripped
 
     with get_connection() as conn:
         try:
@@ -271,7 +275,10 @@ def get_column_stats(column: str) -> dict[str, Any]:
             distribution = [dict(row) for row in cursor.fetchall()]
 
             total = sum(d["count"] for d in distribution)
-            missing = sum(d["count"] for d in distribution if d["value"] is None or d["value"] == "")
+            missing = sum(
+                d["count"] for d in distribution
+                if d["value"] is None or d["value"] == ""
+            )
             return {
                 "column": column,
                 "type": "categorical",

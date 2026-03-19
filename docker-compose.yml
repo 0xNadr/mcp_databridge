@@ -1,0 +1,14 @@
+services:
+  mcp-databridge:
+    build: .
+    environment:
+      - DATABRIDGE_DB_PATH=/app/data/titanic.db
+      - DATABRIDGE_LOG_LEVEL=INFO
+      - DATABRIDGE_TRANSPORT=streamable-http
+      - DATABRIDGE_HOST=0.0.0.0
+      - DATABRIDGE_PORT=8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data:ro
+    restart: unless-stopped
