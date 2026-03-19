@@ -193,8 +193,7 @@ DATABRIDGE_PORT=8000                        # HTTP port (if streamable-http)
 ### 4.6 Documentation
 - README with quickstart, architecture diagram, configuration reference
 - Inline docstrings on all public functions (consumed by MCP clients as tool descriptions)
-- Example agent interaction transcript
-- Contributing guide
+- Example agent interaction transcript in README
 
 ---
 
@@ -235,9 +234,13 @@ mcp_databridge/
 │   │   ├── test_query.py
 │   │   ├── test_analytics.py
 │   │   └── test_sql.py
-│   ├── test_resources.py
 │   ├── test_database.py
-│   └── test_integration.py     # End-to-end MCP protocol tests
+│   ├── test_resources.py
+│   ├── test_models.py
+│   ├── test_prompts.py
+│   ├── test_logging.py
+│   ├── test_server.py
+│   └── test_integration.py     # End-to-end tool interface + workflow tests
 └── README.md
 ```
 

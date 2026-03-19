@@ -164,6 +164,58 @@ src/mcp_databridge/
 └── __main__.py     # Entry point
 ```
 
+## Example Agent Interaction
+
+Below is a realistic example of how an AI agent interacts with MCP DataBridge:
+
+> **User**: "What was the survival rate for women vs men on the Titanic?"
+
+The agent calls `get_survival_analysis` with `dimension="sex"`:
+
+```json
+{
+  "dimension": "sex",
+  "results": [
+    {"sex": "female", "survived_count": 233, "total_count": 314, "survival_rate_pct": 74.2},
+    {"sex": "male", "survived_count": 109, "total_count": 577, "survival_rate_pct": 18.89}
+  ]
+}
+```
+
+> **User**: "What was the average fare by passenger class?"
+
+The agent calls `aggregate_stats` with `group_by="class"`, `metric="avg"`, `column="fare"`:
+
+```json
+{
+  "results": [
+    {"class": "First", "avg_fare": 84.15},
+    {"class": "Second", "avg_fare": 20.66},
+    {"class": "Third", "avg_fare": 13.68}
+  ],
+  "count": 3
+}
+```
+
+> **User**: "Show me first-class female passengers"
+
+The agent calls `query_passengers` with `filters={"sex": "female", "pclass": 1}`:
+
+```json
+{
+  "rows": [
+    {
+      "row_number": 2, "survived": 1, "pclass": 1, "age": 38.0,
+      "sex": "female", "class": "First", "who": "woman",
+      "deck": "C", "embark_town": "Cherbourg", "fare": 71.28, "alive": "yes"
+    }
+  ],
+  "count": 94
+}
+```
+
+All responses use **human-readable labels** (e.g., `"female"`, `"First"`, `"Cherbourg"`) — not raw foreign key IDs.
+
 ## Security
 
 - `run_sql` only allows SELECT — DDL/DML keywords are blocked
