@@ -46,9 +46,32 @@ python -m mcp_databridge
 DATABRIDGE_TRANSPORT=streamable-http python -m mcp_databridge
 ```
 
-### Claude Desktop / VS Code Integration
+### Claude Desktop
 
-Add to your MCP client configuration:
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) and add the `mcpServers` block:
+
+```json
+{
+  "mcpServers": {
+    "databridge": {
+      "command": "/full/path/to/python",
+      "args": ["-m", "mcp_databridge"],
+      "cwd": "/path/to/mcp_databridge",
+      "env": {
+        "DATABRIDGE_DB_PATH": "/path/to/mcp_databridge/data/titanic.db"
+      }
+    }
+  }
+}
+```
+
+> **Important**: Use the full Python path (run `which python` to find it). Claude Desktop does not inherit your shell's `PATH`, so bare `python` won't be found. The `DATABRIDGE_DB_PATH` env var ensures the database is found regardless of working directory.
+
+Then quit Claude Desktop (Cmd+Q) and reopen it. The server should appear under **Connectors**.
+
+### VS Code
+
+Add to your VS Code MCP settings (`.vscode/mcp.json` or user settings):
 
 ```json
 {
@@ -65,12 +88,12 @@ Add to your MCP client configuration:
 ### Docker
 
 ```bash
+# HTTP transport (accessible at http://localhost:8000/mcp)
+docker compose up
+
 # stdio transport (pipe directly to MCP client)
 docker build -t mcp-databridge .
 docker run -i mcp-databridge
-
-# HTTP transport (accessible at http://localhost:8000/mcp)
-docker compose up
 ```
 
 ## Tools
