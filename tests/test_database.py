@@ -76,6 +76,10 @@ class TestSchema:
         assert counts["Class"] == 3
         assert counts["Who"] == 3
         assert counts["Alive"] == 2
+        # These tables include a -1 row with NULL text for missing values
+        assert counts["Deck"] == 8  # 7 decks (A-G) + 1 missing (-1)
+        assert counts["Embarked"] == 4  # 3 ports (C/Q/S) + 1 missing (-1)
+        assert counts["EmbarkTown"] == 4  # 3 towns + 1 missing (-1)
 
 
 class TestResolvedView:
@@ -106,8 +110,17 @@ class TestResolvedView:
         assert total == 891
 
     def test_missing_deck_is_none(self) -> None:
-        """Deck is missing for ~77% of passengers — should show as None/empty."""
+        """Deck is missing for ~77% of passengers — LEFT JOIN on -1 yields None."""
         p = get_passenger_by_rowid(1)
         assert p is not None
-        # Row 1 has deck_id = -1, which should resolve to None or empty
-        assert p["deck"] is None or p["deck"] == ""
+        # Row 1 has deck_id = -1. The Deck lookup table has a -1 row with
+        # a NULL text value, so the LEFT JOIN matches but returns None.
+        assert p["deck"] is None
+
+    def test_missing_embarked_is_none(self) -> None:
+        """Embarked is missing for 2 passengers — LEFT JOIN on -1 yields None."""
+        # Rows 62 and 830 have embarked_id = -1
+        p = get_passenger_by_rowid(62)
+        assert p is not None
+        assert p["embarked"] is None
+        assert p["embark_town"] is None

@@ -62,6 +62,13 @@ FILTER_CONDITIONS: dict[str, str] = {
     "alive": "a.alive = ?",
 }
 
+# Filters that support "missing" value — maps to IS NULL on the resolved column
+NULLABLE_FILTER_COLUMNS: dict[str, str] = {
+    "embarked": "e.embarked IS NULL",
+    "deck": "d.deck IS NULL",
+    "embark_town": "et.embark_town IS NULL",
+}
+
 
 def _get_db_path() -> str:
     """Resolve the database path, checking it exists."""
@@ -113,12 +120,16 @@ def query_resolved(
             if key not in FILTER_CONDITIONS:
                 valid_keys = sorted(FILTER_CONDITIONS)
                 raise ValueError(f"Unknown filter key: {key!r}. Valid: {valid_keys}")
-            where_clauses.append(FILTER_CONDITIONS[key])
-            # Convert booleans to int for SQLite
-            if isinstance(value, bool):
-                params.append(int(value))
+            # "missing" means IS NULL — no parameter needed
+            if value == "missing" and key in NULLABLE_FILTER_COLUMNS:
+                where_clauses.append(NULLABLE_FILTER_COLUMNS[key])
             else:
-                params.append(value)
+                where_clauses.append(FILTER_CONDITIONS[key])
+                # Convert booleans to int for SQLite
+                if isinstance(value, bool):
+                    params.append(int(value))
+                else:
+                    params.append(value)
 
     sql = RESOLVED_VIEW_SQL
     if where_clauses:
@@ -285,12 +296,15 @@ def get_column_stats(column: str) -> dict[str, Any]:
             missing = sum(
                 d["count"] for d in distribution if d["value"] is None or d["value"] == ""
             )
+            non_missing_values = [
+                d for d in distribution if d["value"] is not None and d["value"] != ""
+            ]
             return {
                 "column": column,
                 "type": "categorical",
                 "total": total,
                 "missing": missing,
-                "unique_values": len(distribution),
+                "unique_values": len(non_missing_values),
                 "distribution": distribution,
             }
 
@@ -344,16 +358,22 @@ def aggregate(
         for key, value in filters.items():
             if key not in FILTER_CONDITIONS:
                 raise ValueError(f"Unknown filter key: {key!r}")
-            # Remap filter conditions to use resolved CTE column names
-            condition = FILTER_CONDITIONS[key]
-            # Replace table aliases with direct column refs for CTE
-            for alias in ["o.", "s.", "e.", "c.", "w.", "d.", "et.", "a."]:
-                condition = condition.replace(alias, "")
-            where_clauses.append(condition)
-            if isinstance(value, bool):
-                params.append(int(value))
+            # "missing" means IS NULL — no parameter needed
+            if value == "missing" and key in NULLABLE_FILTER_COLUMNS:
+                condition = NULLABLE_FILTER_COLUMNS[key]
+                for alias in ["o.", "s.", "e.", "c.", "w.", "d.", "et.", "a."]:
+                    condition = condition.replace(alias, "")
+                where_clauses.append(condition)
             else:
-                params.append(value)
+                # Remap filter conditions to use resolved CTE column names
+                condition = FILTER_CONDITIONS[key]
+                for alias in ["o.", "s.", "e.", "c.", "w.", "d.", "et.", "a."]:
+                    condition = condition.replace(alias, "")
+                where_clauses.append(condition)
+                if isinstance(value, bool):
+                    params.append(int(value))
+                else:
+                    params.append(value)
 
     where_sql = ""
     if where_clauses:

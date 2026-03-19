@@ -10,7 +10,7 @@ COPY data/ data/
 RUN pip install --no-cache-dir .
 
 # Non-root user for security
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown -R appuser:appuser /app/data
 USER appuser
 
 ENV DATABRIDGE_DB_PATH=/app/data/titanic.db

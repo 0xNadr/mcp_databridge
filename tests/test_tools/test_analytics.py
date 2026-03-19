@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mcp_databridge.database import aggregate, get_column_stats
+from mcp_databridge.tools.analytics import get_survival_analysis
 
 
 class TestAggregate:
@@ -41,6 +44,12 @@ class TestAggregate:
         with pytest.raises(ValueError, match="Unknown group_by"):
             aggregate("nonexistent", "count", "survived")
 
+    def test_with_missing_filter(self) -> None:
+        """Aggregate with deck='missing' should only include passengers with NULL deck."""
+        results = aggregate("sex", "count", "survived", filters={"deck": "missing"})
+        total = sum(r["count_survived"] for r in results)
+        assert total == 688  # 688 passengers have missing deck
+
 
 class TestColumnStats:
     def test_numeric_column(self) -> None:
@@ -56,6 +65,7 @@ class TestColumnStats:
         stats = get_column_stats("sex")
         assert stats["type"] == "categorical"
         assert stats["unique_values"] == 2
+        assert stats["missing"] == 0
         assert stats["total"] == 891
         values = {d["value"] for d in stats["distribution"]}
         assert values == {"male", "female"}
@@ -64,8 +74,25 @@ class TestColumnStats:
         stats = get_column_stats("class")
         assert stats["type"] == "categorical"
         assert stats["unique_values"] == 3
+        assert stats["missing"] == 0
         values = {d["value"] for d in stats["distribution"]}
         assert values == {"First", "Second", "Third"}
+
+    def test_deck_column_excludes_none_from_unique(self) -> None:
+        """Deck has 7 real values (A-G) and 688 missing — unique_values should be 7."""
+        stats = get_column_stats("deck")
+        assert stats["type"] == "categorical"
+        assert stats["unique_values"] == 7
+        assert stats["missing"] == 688
+        non_null_values = {d["value"] for d in stats["distribution"] if d["value"] is not None}
+        assert non_null_values == {"A", "B", "C", "D", "E", "F", "G"}
+
+    def test_embarked_column_excludes_none_from_unique(self) -> None:
+        """Embarked has 3 real values (C/Q/S) and 2 missing — unique_values should be 3."""
+        stats = get_column_stats("embarked")
+        assert stats["type"] == "categorical"
+        assert stats["unique_values"] == 3
+        assert stats["missing"] == 2
 
     def test_fare_column(self) -> None:
         stats = get_column_stats("fare")
@@ -76,3 +103,44 @@ class TestColumnStats:
     def test_invalid_column(self) -> None:
         with pytest.raises(ValueError, match="Unknown column"):
             get_column_stats("nonexistent")
+
+
+class TestSurvivalAnalysis:
+    def test_by_sex(self) -> None:
+        result = json.loads(get_survival_analysis("sex"))
+        assert result["dimension"] == "sex"
+        sexes = {r["sex"] for r in result["results"]}
+        assert sexes == {"male", "female"}
+        # Women survived at higher rate than men
+        female = next(r for r in result["results"] if r["sex"] == "female")
+        male = next(r for r in result["results"] if r["sex"] == "male")
+        assert female["survival_rate_pct"] > male["survival_rate_pct"]
+
+    def test_by_class(self) -> None:
+        result = json.loads(get_survival_analysis("class"))
+        classes = {r["class"] for r in result["results"]}
+        assert classes == {"First", "Second", "Third"}
+
+    def test_by_age_group(self) -> None:
+        result = json.loads(get_survival_analysis("age_group"))
+        groups = {r["age_group"] for r in result["results"]}
+        assert "Child (0-11)" in groups
+        assert "Unknown" in groups  # 177 passengers with missing age
+
+    def test_by_deck_includes_none(self) -> None:
+        """Deck survival analysis should include a None group for 688 missing values."""
+        result = json.loads(get_survival_analysis("deck"))
+        decks = {r["deck"] for r in result["results"]}
+        assert None in decks
+        assert "A" in decks
+        null_group = next(r for r in result["results"] if r["deck"] is None)
+        assert null_group["total_count"] == 688
+
+    def test_totals_add_up(self) -> None:
+        result = json.loads(get_survival_analysis("sex"))
+        total = sum(r["total_count"] for r in result["results"])
+        assert total == 891
+
+    def test_invalid_dimension(self) -> None:
+        result = json.loads(get_survival_analysis("nonexistent"))
+        assert "error" in result

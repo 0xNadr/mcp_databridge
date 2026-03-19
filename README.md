@@ -5,21 +5,33 @@ Production-ready MCP server that enables AI agents to interact with the Titanic 
 ## Architecture
 
 ```
-┌──────────────┐         MCP Protocol         ┌──────────────────┐
-│   AI Agent   │◄────── stdio / HTTP ────────►│  MCP DataBridge  │
-│ (Claude, etc)│                              │                  │
-└──────────────┘                              │  7 Tools         │
-                                              │  3 Resources     │
-                                              │  3 Prompts       │
-                                              │                  │
-                                              │  ┌────────────┐  │
-                                              │  │  SQLite DB │  │
-                                              │  │  (Titanic) │  │
-                                              │  └────────────┘  │
-                                              └──────────────────┘
+┌──────────────┐         MCP Protocol         ┌──────────────────────────────┐
+│   AI Agent   │◄────── stdio / HTTP ────────►│       MCP DataBridge         │
+│ (Claude, etc)│                              │                              │
+└──────────────┘                              │  Tools ─── query_passengers  │
+                                              │          ├ get_passenger     │
+                                              │          ├ aggregate_stats   │
+                                              │          ├ survival_analysis │
+                                              │          ├ describe_column   │
+                                              │          ├ list_tables       │
+                                              │          └ run_sql (sandbox) │
+                                              │                              │
+                                              │  Resources ─ info, sample,   │
+                                              │              stats/{column}  │
+                                              │                              │
+                                              │  Prompts ── explore_dataset  │
+                                              │           ├ survival_analysis│
+                                              │           └ data_quality     │
+                                              │                              │
+                                              │  ┌────────────────────────┐  │
+                                              │  │  SQLite (8 tables)     │  │
+                                              │  │  891 passengers        │  │
+                                              │  │  Normalized + JOINs    │  │
+                                              │  └────────────────────────┘  │
+                                              └──────────────────────────────┘
 ```
 
-**Database**: 891 passengers across 8 normalized tables (Observation + 7 lookup tables). All tools return human-readable labels — no raw foreign key IDs.
+**Database**: 891 passengers across 8 normalized tables (Observation + 7 lookup tables). All tools resolve foreign keys and return human-readable labels — agents never see raw IDs.
 
 ## Quick Start
 
@@ -27,16 +39,16 @@ Production-ready MCP server that enables AI agents to interact with the Titanic 
 # Install
 pip install -e ".[dev]"
 
-# Run (stdio transport — for MCP clients)
+# Run (stdio transport — for MCP clients like Claude Desktop)
 python -m mcp_databridge
 
-# Or use the CLI entry point
-mcp-databridge
+# Run with HTTP transport (for remote/Docker access)
+DATABRIDGE_TRANSPORT=streamable-http python -m mcp_databridge
 ```
 
 ### Claude Desktop / VS Code Integration
 
-Add to your MCP client config:
+Add to your MCP client configuration:
 
 ```json
 {
@@ -53,35 +65,29 @@ Add to your MCP client config:
 ### Docker
 
 ```bash
-# stdio transport
+# stdio transport (pipe directly to MCP client)
 docker build -t mcp-databridge .
 docker run -i mcp-databridge
 
-# HTTP transport
+# HTTP transport (accessible at http://localhost:8000/mcp)
 docker compose up
-# Server available at http://localhost:8000
 ```
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `query_passengers` | Filter and retrieve passengers with human-readable labels |
-| `get_passenger` | Get a single passenger by row number (1-891) |
-| `aggregate_stats` | Group-by aggregations (count/avg/sum/min/max) |
-| `get_survival_analysis` | Survival rates by class, sex, age group, deck, etc. |
-| `describe_column` | Statistical summary for any column |
-| `list_tables` | Show all tables and their schemas |
-| `run_sql` | Execute read-only SQL (SELECT only, sandboxed) |
-
-### Example Queries an Agent Can Answer
-
-- "What was the survival rate for first-class female passengers?"
-- "Show me the average fare by passenger class"
-- "How many children survived vs adults?"
-- "Which deck had the best survival rate?"
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `query_passengers` | Filter and retrieve passengers with resolved labels | `filters`, `columns`, `limit`, `offset` |
+| `get_passenger` | Get a single passenger by row number (1–891) | `row_number` |
+| `aggregate_stats` | Group-by aggregations (count/avg/sum/min/max) | `group_by`, `metric`, `column` |
+| `get_survival_analysis` | Survival rates by class, sex, age group, deck, etc. | `dimension` |
+| `describe_column` | Statistical summary for any column | `column` |
+| `list_tables` | Show all tables and their schemas | — |
+| `run_sql` | Execute read-only SQL (SELECT only, sandboxed) | `query` |
 
 ### Filter Syntax
+
+Filters use human-readable labels. The server resolves them to foreign key JOINs internally:
 
 ```json
 {
@@ -90,8 +96,19 @@ docker compose up
   "age_min": 20,
   "age_max": 40,
   "survived": true,
-  "embarked": "S"
+  "embarked": "S",
+  "who": "woman",
+  "deck": "B",
+  "alone": false
 }
+```
+
+Use `"missing"` to filter for unknown/NULL values in categorical columns:
+
+```json
+{"deck": "missing"}
+{"embarked": "missing"}
+{"embark_town": "missing"}
 ```
 
 ## Resources
@@ -100,77 +117,21 @@ docker compose up
 |-----|-------------|
 | `databridge://info` | Schema, row counts, missing values, table relationships |
 | `databridge://sample` | First 5 rows with resolved labels |
-| `databridge://stats/{column}` | Statistical summary for a column |
+| `databridge://stats/{column}` | Statistical summary for a column (numeric or categorical) |
 
 ## Prompts
 
 | Prompt | Description |
 |--------|-------------|
-| `explore_dataset` | Guided exploration walkthrough |
-| `survival_analysis` | Step-by-step survival analysis workflow |
-| `data_quality_report` | Missing values and data quality analysis |
-
-## Configuration
-
-All settings via environment variables (12-factor):
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABRIDGE_DB_PATH` | `./data/titanic.db` | Path to SQLite database |
-| `DATABRIDGE_LOG_LEVEL` | `INFO` | Logging level |
-| `DATABRIDGE_MAX_RESULTS` | `200` | Max rows per query |
-| `DATABRIDGE_TRANSPORT` | `stdio` | Transport: `stdio` or `streamable-http` |
-| `DATABRIDGE_HOST` | `0.0.0.0` | HTTP host (streamable-http only) |
-| `DATABRIDGE_PORT` | `8000` | HTTP port (streamable-http only) |
-| `DATABRIDGE_QUERY_TIMEOUT` | `30` | Query timeout in seconds |
-
-## Development
-
-```bash
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest -v
-
-# Run tests with coverage
-pytest --cov=mcp_databridge --cov-report=term-missing
-
-# Lint
-ruff check src/ tests/
-
-# Type check
-mypy src/
-
-# MCP Inspector (interactive testing)
-mcp dev src/mcp_databridge/server.py
-```
-
-## Project Structure
-
-```
-src/mcp_databridge/
-├── server.py       # FastMCP server wiring — registers tools, resources, prompts
-├── database.py     # SQLite queries, resolved-view JOINs, SQL sandbox
-├── models.py       # Pydantic models for validation
-├── config.py       # Environment variable configuration
-├── logging.py      # Structured JSON logging (structlog)
-├── resources.py    # MCP resources (info, sample, stats)
-├── prompts.py      # MCP prompts (explore, survival, quality)
-├── tools/
-│   ├── query.py    # query_passengers, get_passenger, list_tables
-│   ├── analytics.py # aggregate_stats, get_survival_analysis, describe_column
-│   └── sql.py      # run_sql (sandboxed, SELECT-only)
-└── __main__.py     # Entry point
-```
+| `explore_dataset` | Guided exploration — schema overview, suggested starting queries |
+| `survival_analysis` | Step-by-step survival analysis across multiple dimensions |
+| `data_quality_report` | Missing values, distributions, data quality findings |
 
 ## Example Agent Interaction
 
-Below is a realistic example of how an AI agent interacts with MCP DataBridge:
+> **User**: "What was the survival rate for women vs men?"
 
-> **User**: "What was the survival rate for women vs men on the Titanic?"
-
-The agent calls `get_survival_analysis` with `dimension="sex"`:
+Agent calls `get_survival_analysis(dimension="sex")`:
 
 ```json
 {
@@ -182,9 +143,9 @@ The agent calls `get_survival_analysis` with `dimension="sex"`:
 }
 ```
 
-> **User**: "What was the average fare by passenger class?"
+> **User**: "Average fare by passenger class?"
 
-The agent calls `aggregate_stats` with `group_by="class"`, `metric="avg"`, `column="fare"`:
+Agent calls `aggregate_stats(group_by="class", metric="avg", column="fare")`:
 
 ```json
 {
@@ -199,7 +160,7 @@ The agent calls `aggregate_stats` with `group_by="class"`, `metric="avg"`, `colu
 
 > **User**: "Show me first-class female passengers"
 
-The agent calls `query_passengers` with `filters={"sex": "female", "pclass": 1}`:
+Agent calls `query_passengers(filters={"sex": "female", "pclass": 1})`:
 
 ```json
 {
@@ -214,16 +175,104 @@ The agent calls `query_passengers` with `filters={"sex": "female", "pclass": 1}`
 }
 ```
 
-All responses use **human-readable labels** (e.g., `"female"`, `"First"`, `"Cherbourg"`) — not raw foreign key IDs.
+All responses use **human-readable labels** (e.g., `"female"`, `"First"`, `"Cherbourg"`) — the normalized schema is fully abstracted from the agent.
+
+## Configuration
+
+All settings via environment variables (12-factor compliant):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABRIDGE_DB_PATH` | `./data/titanic.db` | Path to SQLite database |
+| `DATABRIDGE_LOG_LEVEL` | `INFO` | Logging level |
+| `DATABRIDGE_MAX_RESULTS` | `200` | Max rows per query |
+| `DATABRIDGE_TRANSPORT` | `stdio` | Transport: `stdio` \| `streamable-http` |
+| `DATABRIDGE_HOST` | `0.0.0.0` | HTTP host (streamable-http only) |
+| `DATABRIDGE_PORT` | `8000` | HTTP port (streamable-http only) |
+| `DATABRIDGE_QUERY_TIMEOUT` | `30` | Query timeout in seconds |
 
 ## Security
 
-- `run_sql` only allows SELECT — DDL/DML keywords are blocked
-- All built-in tools use parameterized queries (no SQL injection)
-- All inputs validated via Pydantic models
-- Result sets capped at 200 rows
-- Non-root user in Docker container
+- **Read-only SQL**: `run_sql` only allows SELECT — DDL/DML keywords (DROP, INSERT, UPDATE, DELETE, ALTER, CREATE, ATTACH, DETACH, PRAGMA) are blocked
+- **Parameterized queries**: All built-in tools use parameterized queries to prevent SQL injection
+- **Input validation**: All tool parameters validated via Pydantic models with constrained types
+- **Result size limits**: Max 200 rows per query (configurable)
+- **Non-root container**: Docker runs as unprivileged `appuser`
+- **Multi-statement blocking**: Semicolons in `run_sql` queries are rejected
+
+## Testing
+
+```bash
+# Run all tests (119 tests, 95% coverage)
+pytest --cov=mcp_databridge --cov-report=term-missing -v
+
+# Lint + format check
+ruff check src/ tests/
+ruff format --check src/ tests/
+
+# Type check
+mypy src/
+
+# Interactive MCP Inspector
+mcp dev src/mcp_databridge/server.py
+```
+
+**Test suite includes:**
+- Unit tests for all 7 tools, 3 resources, 3 prompts
+- Database layer tests (connection management, query helpers, SQL sandbox)
+- Pydantic model validation tests
+- Full MCP protocol integration test (spawns server via stdio, performs JSON-RPC handshake, tests all endpoints)
+- Structured logging tests (correlation IDs, log configuration)
+
+## Project Structure
+
+```
+mcp_databridge/
+├── pyproject.toml              # Dependencies, tool config (ruff, mypy, pytest)
+├── Dockerfile                  # Production container (non-root, slim)
+├── docker-compose.yml          # HTTP transport deployment
+├── .github/workflows/ci.yml    # CI: lint → type-check → test (3.11-3.13) → docker build
+├── .env.example                # Configuration template
+├── data/
+│   └── titanic.db              # Pre-built SQLite database (committed)
+├── src/mcp_databridge/
+│   ├── __main__.py             # Entry point: python -m mcp_databridge
+│   ├── server.py               # FastMCP server — registers tools, resources, prompts
+│   ├── database.py             # SQLite connection, resolved-view JOINs, SQL sandbox
+│   ├── models.py               # Pydantic models for parameter validation
+│   ├── config.py               # pydantic-settings (env vars with DATABRIDGE_ prefix)
+│   ├── logging.py              # structlog JSON logging with correlation IDs
+│   ├── resources.py            # MCP resources (info, sample, stats)
+│   ├── prompts.py              # MCP prompts (explore, survival, quality)
+│   └── tools/
+│       ├── query.py            # query_passengers, get_passenger, list_tables
+│       ├── analytics.py        # aggregate_stats, get_survival_analysis, describe_column
+│       └── sql.py              # run_sql (sandboxed, SELECT-only)
+└── tests/
+    ├── conftest.py             # Shared fixtures (test DB copy)
+    ├── test_tools/             # Unit tests for each tool module
+    ├── test_database.py        # Database layer tests
+    ├── test_resources.py       # Resource endpoint tests
+    ├── test_prompts.py         # Prompt content tests
+    ├── test_models.py          # Pydantic validation tests
+    ├── test_logging.py         # Logging configuration tests
+    ├── test_server.py          # Server wiring tests
+    ├── test_integration.py     # Integration tests
+    └── test_mcp_protocol.py    # Full MCP protocol round-trip via stdio
+```
 
 ## Tech Stack
 
-Python 3.11+ | FastMCP | SQLite (stdlib sqlite3) | Pydantic | structlog | pytest | Ruff | Docker | GitHub Actions
+| Component | Choice | Why |
+|-----------|--------|-----|
+| Language | Python 3.11+ | Challenge requirement |
+| MCP SDK | FastMCP (mcp v1.26+) | Official Anthropic SDK, decorator-based registration |
+| Database | SQLite (stdlib sqlite3) | Zero-infra, pre-built database, WAL mode for concurrent reads |
+| Validation | Pydantic v2 | Type safety, constrained types, serialization |
+| Config | pydantic-settings | 12-factor env var management with type coercion |
+| Logging | structlog | Structured JSON logging, correlation IDs |
+| Testing | pytest + pytest-asyncio | 119 tests, 95% coverage, MCP protocol integration |
+| Linting | Ruff | Fast, replaces flake8 + isort + pyupgrade |
+| Type Check | mypy (strict mode) | Static analysis, catches bugs before runtime |
+| Container | Docker (slim) | Non-root, minimal image, stdio + HTTP transport |
+| CI/CD | GitHub Actions | lint → type-check → test (3.11/3.12/3.13) → docker build |

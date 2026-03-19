@@ -117,6 +117,13 @@ The database is **normalized** across 8 tables with 891 passenger observations.
 
 Filters use **human-readable labels** (e.g., `"sex": "female"`, not `"sex_id": 0`). The server resolves labels to IDs internally via JOINs. This abstracts the normalized schema for the AI agent.
 
+Use `"missing"` to filter for unknown/NULL values in columns with missing data:
+```json
+{"deck": "missing"}
+{"embarked": "missing"}
+{"embark_town": "missing"}
+```
+
 **Tool response format** — all tools return resolved, human-readable data:
 ```json
 {

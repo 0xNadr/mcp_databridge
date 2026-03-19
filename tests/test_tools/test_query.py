@@ -67,6 +67,32 @@ class TestQueryResolved:
         assert row["who"] in ("child", "man", "woman")
         assert row["alive"] in ("yes", "no")
 
+    def test_filter_missing_deck(self) -> None:
+        """Filter deck='missing' returns passengers with NULL deck (688 expected)."""
+        rows = query_resolved(filters={"deck": "missing"}, limit=200)
+        assert all(r["deck"] is None for r in rows)
+        # There are 688 total — we get 200 (max) but all should be None
+        assert len(rows) == 200
+
+    def test_filter_missing_embarked(self) -> None:
+        """Filter embarked='missing' returns the 2 passengers with NULL embarked."""
+        rows = query_resolved(filters={"embarked": "missing"}, limit=200)
+        assert len(rows) == 2
+        assert all(r["embarked"] is None for r in rows)
+        assert all(r["embark_town"] is None for r in rows)
+
+    def test_filter_missing_embark_town(self) -> None:
+        """Filter embark_town='missing' returns passengers with NULL embark_town."""
+        rows = query_resolved(filters={"embark_town": "missing"}, limit=200)
+        assert len(rows) == 2
+        assert all(r["embark_town"] is None for r in rows)
+
+    def test_filter_missing_combined_with_other(self) -> None:
+        """Missing filter works in combination with other filters."""
+        rows = query_resolved(filters={"deck": "missing", "pclass": 3}, limit=200)
+        assert all(r["deck"] is None for r in rows)
+        assert all(r["pclass"] == 3 for r in rows)
+
 
 class TestGetPassenger:
     def test_valid_row(self) -> None:

@@ -58,8 +58,13 @@ def data_quality_report() -> str:
         "2. **Distributions**: Check each column's distribution\n"
         "   - Use `describe_column` on 'fare' — look for outliers\n"
         "   - Use `describe_column` on 'age' — check for reasonable range\n\n"
-        "3. **Redundancy**: Note that 'survived' and 'alive' carry the same info\n\n"
-        "4. **Encoding**: Missing categorical values use -1 foreign keys, not NULL\n"
-        "   - This affects Deck, Embarked, and EmbarkTown\n\n"
-        "5. **Summary**: Compile findings into a quality score and recommendations\n"
+        "3. **Zero-fare anomaly**: 7 passengers have fare=0.0\n"
+        "   - Use `query_passengers` with filters to inspect them\n"
+        "   - These may be crew, companions, or data entry errors\n\n"
+        "4. **Redundancy**: Note that 'survived' and 'alive' carry the same info\n\n"
+        "5. **Encoding**: Missing categorical values are stored as -1 foreign keys\n"
+        "   - This affects Deck (77%), Embarked (2 rows), and EmbarkTown (2 rows)\n"
+        "   - Use 'missing' filter value to find them: "
+        '{"deck": "missing"}\n\n'
+        "6. **Summary**: Compile findings into a quality score and recommendations\n"
     )

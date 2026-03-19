@@ -39,6 +39,18 @@ class TestPassengerFilters:
         with pytest.raises(ValidationError):
             PassengerFilters(sex="invalid")
 
+    def test_missing_deck_filter(self) -> None:
+        f = PassengerFilters(deck="missing")
+        assert f.to_filter_dict() == {"deck": "missing"}
+
+    def test_missing_embarked_filter(self) -> None:
+        f = PassengerFilters(embarked="missing")
+        assert f.to_filter_dict() == {"embarked": "missing"}
+
+    def test_missing_embark_town_filter(self) -> None:
+        f = PassengerFilters(embark_town="missing")
+        assert f.to_filter_dict() == {"embark_town": "missing"}
+
 
 class TestQueryPassengersParams:
     def test_defaults(self) -> None:

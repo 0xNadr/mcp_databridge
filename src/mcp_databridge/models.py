@@ -15,15 +15,19 @@ class PassengerFilters(BaseModel):
     sex: Literal["male", "female"] | None = Field(None, description="Gender")
     age_min: float | None = Field(None, ge=0, description="Minimum age")
     age_max: float | None = Field(None, ge=0, description="Maximum age")
-    embarked: Literal["C", "Q", "S"] | None = Field(None, description="Port of embarkation")
+    embarked: Literal["C", "Q", "S", "missing"] | None = Field(
+        None, description="Port of embarkation (use 'missing' to find unknown)"
+    )
     who: Literal["child", "man", "woman"] | None = Field(
         None, description="Category: child, man, or woman"
     )
-    deck: Literal["A", "B", "C", "D", "E", "F", "G"] | None = Field(None, description="Deck letter")
+    deck: Literal["A", "B", "C", "D", "E", "F", "G", "missing"] | None = Field(
+        None, description="Deck letter (use 'missing' to find unknown)"
+    )
     alone: bool | None = Field(None, description="Travelling alone")
     adult_male: bool | None = Field(None, description="Is adult male")
-    embark_town: Literal["Cherbourg", "Queenstown", "Southampton"] | None = Field(
-        None, description="Embarkation town"
+    embark_town: Literal["Cherbourg", "Queenstown", "Southampton", "missing"] | None = Field(
+        None, description="Embarkation town (use 'missing' to find unknown)"
     )
 
     def to_filter_dict(self) -> dict[str, Any]:

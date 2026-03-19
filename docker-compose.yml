@@ -1,6 +1,9 @@
+name: databridge
+
 services:
-  mcp-databridge:
+  server:
     build: .
+    container_name: databridge
     environment:
       - DATABRIDGE_DB_PATH=/app/data/titanic.db
       - DATABRIDGE_LOG_LEVEL=INFO
