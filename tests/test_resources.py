@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 
-from mcp_databridge.server import column_stats, dataset_info, dataset_sample
+from mcp_databridge.resources import column_stats_resource as column_stats
+from mcp_databridge.resources import dataset_info, dataset_sample
 
 
 class TestDatasetInfo:

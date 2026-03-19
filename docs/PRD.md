@@ -29,12 +29,12 @@ A newly founded MLOps team needs a **production-ready Python MCP Server** that e
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| Language | Python 3.12+ | Required by challenge |
+| Language | Python 3.11+ | Broad compatibility, modern syntax |
 | MCP SDK | `mcp` (FastMCP) v1.26+ | Official Anthropic SDK |
 | Database | SQLite (provided .db file) | Pre-built, normalized, zero-infra |
-| ORM | SQLAlchemy 2.0 | Type-safe queries, connection management |
+| DB Access | sqlite3 (stdlib) | Zero-dependency, WAL mode, Row factory |
 | Validation | Pydantic v2 | Type safety, serialization |
-| Testing | pytest + pytest-asyncio | Industry standard |
+| Testing | pytest + pytest-cov | Industry standard |
 | Linting | Ruff | Fast, comprehensive |
 | Type Checking | mypy | Static analysis |
 | Containerization | Docker + docker-compose | Deployment ready |
@@ -166,8 +166,8 @@ Filters use **human-readable labels** (e.g., `"sex": "female"`, not `"sex_id": 0
 
 ### 4.2 Observability
 - **Structured logging** (JSON) via structlog — every tool call logged with duration, params, row count
-- **Health check** endpoint for monitoring
 - **Error tracking** with correlation IDs
+- **Logs to stderr** — stdout reserved for MCP protocol communication
 
 ### 4.3 Configuration (12-Factor)
 ```env
@@ -181,13 +181,13 @@ DATABRIDGE_PORT=8000                        # HTTP port (if streamable-http)
 
 ### 4.4 Performance
 - SQLite with WAL mode for concurrent reads
-- Connection pooling via SQLAlchemy
-- Query timeout enforcement (30s default)
+- Context-managed connections via sqlite3 stdlib
+- Result set size limits (max 200 rows per query)
 - Lazy database initialization
 
 ### 4.5 Testing
 - **Unit tests**: All tools, resources, prompts individually tested
-- **Integration tests**: Full MCP protocol round-trip via in-memory transport
+- **Integration tests**: End-to-end tool interface tests with workflow scenarios
 - **Coverage target**: >80%
 
 ### 4.6 Documentation
@@ -219,7 +219,7 @@ mcp_databridge/
 │       ├── __main__.py         # Entry point: python -m mcp_databridge
 │       ├── server.py           # FastMCP server definition + tool/resource/prompt registration
 │       ├── config.py           # Pydantic settings
-│       ├── database.py         # SQLAlchemy engine, session, connection management
+│       ├── database.py         # sqlite3 connection management, resolved-view queries
 │       ├── models.py           # Pydantic models for tool params & responses
 │       ├── tools/
 │       │   ├── __init__.py
@@ -247,7 +247,7 @@ mcp_databridge/
 
 ### Phase 1: Foundation (~2h)
 - Project scaffolding (pyproject.toml, src layout, config)
-- Database layer (SQLAlchemy connection, resolved-view query helpers for JOINs)
+- Database layer (sqlite3 connection, resolved-view query helpers for JOINs)
 - Basic MCP server with FastMCP
 - First tool: `query_passengers` with filter-to-JOIN resolution
 

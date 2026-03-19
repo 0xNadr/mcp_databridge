@@ -1,13 +1,25 @@
-"""Structured logging configuration via structlog."""
+"""Structured logging configuration via structlog with correlation IDs."""
 
 from __future__ import annotations
 
 import logging
 import sys
+import uuid
 
 import structlog
 
 from mcp_databridge.config import settings
+
+
+def add_correlation_id(
+    logger: structlog.types.WrappedLogger,
+    method_name: str,
+    event_dict: structlog.types.EventDict,
+) -> structlog.types.EventDict:
+    """Add a correlation ID to each log entry if not already present."""
+    if "correlation_id" not in event_dict:
+        event_dict["correlation_id"] = str(uuid.uuid4())[:8]
+    return event_dict
 
 
 def setup_logging() -> None:
@@ -17,6 +29,7 @@ def setup_logging() -> None:
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
+            add_correlation_id,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),

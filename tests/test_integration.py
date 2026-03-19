@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import json
 
-from mcp_databridge.server import (
+from mcp_databridge.tools.analytics import (
     aggregate_stats,
     describe_column,
-    get_passenger,
     get_survival_analysis,
-    list_tables,
-    query_passengers,
-    run_sql,
 )
+from mcp_databridge.tools.query import get_passenger, list_tables, query_passengers
+from mcp_databridge.tools.sql import run_sql
 
 
 class TestToolEndToEnd:
