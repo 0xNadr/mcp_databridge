@@ -36,6 +36,8 @@ mcp = FastMCP(
         "All data is returned with human-readable labels (e.g., 'female' not '0'). "
         "Start with list_tables or query_passengers to explore the data."
     ),
+    host=settings.host,
+    port=settings.port,
 )
 
 
