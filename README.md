@@ -44,6 +44,9 @@ python -m mcp_databridge
 
 # Run with HTTP transport (for remote/Docker access)
 DATABRIDGE_TRANSPORT=streamable-http python -m mcp_databridge
+
+# Open MCP Inspector (interactive web UI for testing tools/resources/prompts)
+mcp dev src/mcp_databridge/server.py
 ```
 
 ### Claude Desktop
