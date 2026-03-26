@@ -46,7 +46,7 @@ python -m mcp_databridge
 DATABRIDGE_TRANSPORT=streamable-http python -m mcp_databridge
 
 # Open MCP Inspector (interactive web UI for testing tools/resources/prompts)
-mcp dev src/mcp_databridge/server.py
+npx @modelcontextprotocol/inspector --config inspector-config.json --server databridge
 ```
 
 ### Claude Desktop
@@ -92,12 +92,26 @@ Add to your VS Code MCP settings (`.vscode/mcp.json` or user settings):
 
 ```bash
 # HTTP transport (accessible at http://localhost:8000/mcp)
-docker compose up
+docker compose up -d
 
 # stdio transport (pipe directly to MCP client)
 docker build -t mcp-databridge .
 docker run -i mcp-databridge
 ```
+
+To connect Claude Desktop to the Docker container, edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "databridge": {
+      "url": "http://localhost:8000/mcp"
+    }
+  }
+}
+```
+
+Then quit Claude Desktop (Cmd+Q) and reopen it. View server logs with `docker logs -f databridge`.
 
 ## Tools
 
@@ -239,8 +253,8 @@ ruff format --check src/ tests/
 # Type check
 mypy src/
 
-# Interactive MCP Inspector
-mcp dev src/mcp_databridge/server.py
+# Interactive MCP Inspector (pre-configured command, args, env vars)
+npx @modelcontextprotocol/inspector --config inspector-config.json --server databridge
 ```
 
 **Test suite includes:**
@@ -257,6 +271,7 @@ mcp_databridge/
 ├── pyproject.toml              # Dependencies, tool config (ruff, mypy, pytest)
 ├── Dockerfile                  # Production container (non-root, slim)
 ├── docker-compose.yml          # HTTP transport deployment
+├── inspector-config.json       # Pre-configured MCP Inspector (command, args, env vars)
 ├── .github/workflows/ci.yml    # CI: lint → type-check → test (3.11-3.13) → docker build
 ├── .env.example                # Configuration template
 ├── data/

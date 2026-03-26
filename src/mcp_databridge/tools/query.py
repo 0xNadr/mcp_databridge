@@ -32,6 +32,11 @@ def query_passengers(
     age_min, age_max, embarked (C/Q/S), who (child/man/woman), deck (A-G),
     alone (bool), adult_male (bool), embark_town (Cherbourg/Queenstown/Southampton).
 
+    Examples:
+        - First-class women: filters={"sex": "female", "pclass": 1}, limit=3
+        - Survivors under 18: filters={"survived": true, "age_max": 18}
+        - Error handling test: filters={"bad_column": "x"} → returns valid filter list
+
     Args:
         filters: Optional dict of filters (e.g., {"sex": "female", "pclass": 1}).
         columns: Optional list of columns to return. Returns all if not specified.
@@ -58,6 +63,10 @@ def get_passenger(row_number: int) -> str:
     """Get a single passenger by their row number (1-based).
 
     Returns all fields with resolved labels for the specified passenger.
+
+    Examples:
+        - row_number=1 → first passenger (Mr. Owen Harris Braund, Third class, male)
+        - row_number=2 → Mrs. John Bradley Cumings, First class, female
 
     Args:
         row_number: The 1-based row number of the passenger (1-891).

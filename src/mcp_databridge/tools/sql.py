@@ -21,6 +21,11 @@ def run_sql(query: str) -> str:
     The database has these tables: Observation (main), Sex, Embarked, Class,
     Who, Deck, EmbarkTown, Alive (all lookup tables with _id foreign keys).
 
+    Examples:
+        - query="SELECT survived, COUNT(*), ROUND(AVG(age),1) as avg_age FROM Observation WHERE age IS NOT NULL GROUP BY survived"
+        - query="SELECT * FROM Sex" → list all sex lookup values
+        - Security test: query="DROP TABLE Observation" → blocked (SELECT only)
+
     Args:
         query: A SELECT SQL query to execute.
     """

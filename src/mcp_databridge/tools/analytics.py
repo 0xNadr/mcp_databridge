@@ -28,6 +28,11 @@ def aggregate_stats(
 
     Compute count, avg, sum, min, or max of any column, grouped by any dimension.
 
+    Examples:
+        - Average fare by class: group_by="class", metric="avg", column="fare"
+        - Survival count by sex: group_by="sex", metric="sum", column="survived"
+        - Max age by deck: group_by="deck", metric="max", column="age"
+
     Args:
         group_by: Column to group by (e.g., 'sex', 'pclass', 'class', 'who', 'deck').
         metric: Aggregation function — one of: count, avg, sum, min, max.
@@ -57,6 +62,11 @@ def get_survival_analysis(dimension: str) -> str:
 
     Returns survival count, total count, and survival rate for each value
     of the specified dimension.
+
+    Examples:
+        - dimension="sex" → 74.2% female vs 18.9% male survival
+        - dimension="class" → First: 63%, Second: 47%, Third: 24%
+        - dimension="age_group" → Child, Teenager, Young Adult, etc.
 
     Args:
         dimension: One of: class, sex, embarked, age_group, deck, who, alone.
@@ -132,6 +142,11 @@ def describe_column(column: str) -> str:
 
     For numeric columns: count, missing, min, max, mean, median, sum.
     For categorical columns: total, missing, unique values, value distribution.
+
+    Examples:
+        - column="age" → count=714, missing=177, mean=29.7, median=28.0
+        - column="fare" → min=0, max=512.33, mean=32.2
+        - column="sex" → male: 577, female: 314
 
     Args:
         column: Column name (e.g., 'age', 'fare', 'sex', 'class', 'deck').

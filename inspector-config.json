@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "databridge": {
+      "command": "python",
+      "args": ["-m", "mcp_databridge"],
+      "env": {
+        "DATABRIDGE_DB_PATH": "/Users/nader/Documents/GitHub/mcp_databridge/data/titanic.db"
+      }
+    }
+  }
+}
